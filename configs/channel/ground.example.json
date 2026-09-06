@@ -1,0 +1,19 @@
+{
+  "node_id": "ground-01",
+  "peer_node_id": "satellite-01",
+  "role": "ground",
+  "api_listen_host": "0.0.0.0",
+  "api_listen_port": 8090,
+  "data_listen_host": "10.77.0.1",
+  "data_listen_port": 9000,
+  "peer_data_host": "10.77.0.2",
+  "peer_data_port": 9000,
+  "auth_token": "replace-with-the-same-random-token-on-both-nodes",
+  "spool_dir": "../../results/channel-twin/ground",
+  "scenario_id": "spaceverse-compatible-static",
+  "scenario_file": "scenarios/spaceverse-compatible-static.json",
+  "max_artifact_bytes": 1073741824,
+  "attempt_timeout_seconds": 30,
+  "retry_interval_seconds": 2,
+  "io_chunk_bytes": 262144
+}

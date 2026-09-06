@@ -1,0 +1,56 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://example.invalid/schemas/channel-trace.schema.json",
+  "title": "Canonical satellite-ground dynamic channel trace",
+  "type": "object",
+  "required": ["schema_version", "scenario_id", "time_mode", "source", "states"],
+  "properties": {
+    "schema_version": {"const": "1.0"},
+    "scenario_id": {"type": "string", "minLength": 1},
+    "time_mode": {"const": "realtime"},
+    "origin_timestamp_utc": {"type": "string"},
+    "duration_ms": {"type": "integer", "minimum": 1},
+    "source": {"type": "object"},
+    "compiler": {"type": "object"},
+    "states": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "required": ["state_seq", "effective_at_offset_ms", "duration_ms", "links"],
+        "properties": {
+          "state_seq": {"type": "integer", "minimum": 0},
+          "effective_at_offset_ms": {"type": "integer", "minimum": 0},
+          "duration_ms": {"type": "integer", "minimum": 1},
+          "links": {
+            "type": "object",
+            "required": ["uplink", "downlink"],
+            "properties": {
+              "uplink": {"$ref": "#/$defs/profile"},
+              "downlink": {"$ref": "#/$defs/profile"}
+            },
+            "additionalProperties": false
+          }
+        },
+        "additionalProperties": false
+      }
+    }
+  },
+  "$defs": {
+    "profile": {
+      "type": "object",
+      "required": ["available", "rate_bps", "one_way_delay_ms", "jitter_ms", "loss_pct", "queue_limit_packets", "provenance"],
+      "properties": {
+        "available": {"type": "boolean"},
+        "rate_bps": {"type": "integer", "minimum": 1},
+        "one_way_delay_ms": {"type": "number", "minimum": 0},
+        "jitter_ms": {"type": "number", "minimum": 0},
+        "loss_pct": {"type": "number", "minimum": 0, "maximum": 100},
+        "queue_limit_packets": {"type": "integer", "minimum": 1},
+        "provenance": {"type": "object"}
+      },
+      "additionalProperties": false
+    }
+  },
+  "additionalProperties": true
+}

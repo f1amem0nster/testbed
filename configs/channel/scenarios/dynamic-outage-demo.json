@@ -1,0 +1,45 @@
+{
+  "schema_version": "1.0",
+  "scenario_id": "dynamic-outage-demo",
+  "time_mode": "realtime",
+  "duration_ms": 8000,
+  "source": {
+    "dataset": "synthetic",
+    "license": "project test fixture",
+    "limitations": [
+      "Engineering validation scenario only; not measured satellite data."
+    ]
+  },
+  "compiler": {
+    "kind": "hand-authored-test-fixture"
+  },
+  "states": [
+    {
+      "state_seq": 0,
+      "effective_at_offset_ms": 0,
+      "duration_ms": 2000,
+      "links": {
+        "uplink": {"available": true, "rate_bps": 30000000, "one_way_delay_ms": 20, "jitter_ms": 2, "loss_pct": 0.1, "queue_limit_packets": 10000, "provenance": {"kind": "assumed"}},
+        "downlink": {"available": true, "rate_bps": 110670000, "one_way_delay_ms": 20, "jitter_ms": 2, "loss_pct": 0.1, "queue_limit_packets": 10000, "provenance": {"kind": "assumed"}}
+      }
+    },
+    {
+      "state_seq": 1,
+      "effective_at_offset_ms": 2000,
+      "duration_ms": 3000,
+      "links": {
+        "uplink": {"available": false, "rate_bps": 30000000, "one_way_delay_ms": 20, "jitter_ms": 2, "loss_pct": 100, "queue_limit_packets": 10000, "provenance": {"kind": "synthetic_outage"}},
+        "downlink": {"available": false, "rate_bps": 110670000, "one_way_delay_ms": 20, "jitter_ms": 2, "loss_pct": 100, "queue_limit_packets": 10000, "provenance": {"kind": "synthetic_outage"}}
+      }
+    },
+    {
+      "state_seq": 2,
+      "effective_at_offset_ms": 5000,
+      "duration_ms": 3000,
+      "links": {
+        "uplink": {"available": true, "rate_bps": 15000000, "one_way_delay_ms": 30, "jitter_ms": 5, "loss_pct": 1, "queue_limit_packets": 10000, "provenance": {"kind": "assumed_recovery"}},
+        "downlink": {"available": true, "rate_bps": 55000000, "one_way_delay_ms": 30, "jitter_ms": 5, "loss_pct": 1, "queue_limit_packets": 10000, "provenance": {"kind": "assumed_recovery"}}
+      }
+    }
+  ]
+}

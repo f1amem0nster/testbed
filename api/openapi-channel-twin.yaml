@@ -1,0 +1,127 @@
+openapi: 3.0.3
+info:
+  title: Satellite-Ground Channel Twin API
+  version: 0.1.0
+  description: Application-facing API for the static two-endpoint TCP channel baseline.
+servers:
+  - url: http://127.0.0.1:8090
+components:
+  securitySchemes:
+    channelToken:
+      type: apiKey
+      in: header
+      name: X-Channel-Token
+  schemas:
+    Transfer:
+      type: object
+      required: [transfer_id, source_node, destination_node, direction, payload_bytes, sha256, state]
+      properties:
+        transfer_id: {type: string, pattern: '^[A-Za-z0-9][A-Za-z0-9._-]{0,127}$'}
+        run_id: {type: string}
+        artifact_type: {type: string}
+        source_node: {type: string}
+        destination_node: {type: string}
+        direction: {type: string, enum: [UPLINK, DOWNLINK]}
+        scenario_id: {type: string}
+        scenario_sha256: {type: string, nullable: true, pattern: '^[0-9a-f]{64}$'}
+        payload_bytes: {type: integer, format: int64, minimum: 0}
+        sha256: {type: string, pattern: '^[0-9a-f]{64}$'}
+        state: {type: string, enum: [QUEUED, SENDING, RETRY_WAIT, RECEIVED_VERIFIED, DELIVERED]}
+        attempts: {type: integer, minimum: 0}
+        last_error: {type: string, nullable: true}
+    Error:
+      type: object
+      properties:
+        ok: {type: boolean, enum: [false]}
+        error:
+          type: object
+          properties:
+            code: {type: string}
+            message: {type: string}
+security:
+  - channelToken: []
+paths:
+  /health:
+    get:
+      security: []
+      summary: Liveness and local queue summary
+      responses:
+        '200': {description: Gateway is ready}
+  /v1/system/info:
+    get:
+      summary: Return endpoint and scenario information
+      responses:
+        '200': {description: System information}
+  /v1/transfers:
+    post:
+      summary: Persist and enqueue one real artifact
+      parameters:
+        - in: header
+          name: X-Transfer-Id
+          required: true
+          schema: {type: string}
+        - in: header
+          name: X-Run-Id
+          schema: {type: string, default: static-local}
+        - in: header
+          name: X-Artifact-Type
+          schema: {type: string, default: application/octet-stream}
+        - in: header
+          name: X-Content-SHA256
+          required: true
+          schema: {type: string, pattern: '^[0-9a-f]{64}$'}
+      requestBody:
+        required: true
+        content:
+          application/octet-stream:
+            schema: {type: string, format: binary}
+      responses:
+        '202': {description: Artifact is durably accepted and queued}
+        '400': {description: Invalid transfer, content, or size}
+        '409': {description: Transfer ID conflicts with different content}
+    get:
+      summary: List locally submitted transfers
+      responses:
+        '200': {description: Transfer list}
+  /v1/transfers/{transfer_id}:
+    parameters:
+      - in: path
+        name: transfer_id
+        required: true
+        schema: {type: string}
+    get:
+      summary: Read local send status
+      responses:
+        '200': {description: Transfer status}
+        '404': {description: Unknown transfer}
+  /v1/deliveries:
+    get:
+      summary: List verified incoming deliveries
+      responses:
+        '200': {description: Delivery list}
+  /v1/deliveries/{transfer_id}:
+    parameters:
+      - in: path
+        name: transfer_id
+        required: true
+        schema: {type: string}
+    get:
+      summary: Read verified incoming delivery metadata
+      responses:
+        '200': {description: Delivery metadata}
+        '404': {description: Unknown delivery}
+  /v1/deliveries/{transfer_id}/content:
+    parameters:
+      - in: path
+        name: transfer_id
+        required: true
+        schema: {type: string}
+    get:
+      summary: Download verified incoming bytes
+      responses:
+        '200':
+          description: Verified artifact
+          content:
+            application/octet-stream:
+              schema: {type: string, format: binary}
+        '404': {description: Unknown delivery}

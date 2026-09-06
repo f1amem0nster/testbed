@@ -1,0 +1,22 @@
+[Unit]
+Description=Satellite-Ground Channel Twin (%i)
+Requires=channel-twin-network@%i.service
+After=network-online.target openvswitch-switch.service channel-twin-network@%i.service
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=spaceverse
+Group=spaceverse
+WorkingDirectory=/opt/sate2gs-testbed
+Environment=PYTHONUNBUFFERED=1
+ExecStart=/opt/sate2gs-testbed/.venv/bin/python -m channel_twin --config /etc/sate2gs-testbed/channel-twin/%i.json
+Restart=on-failure
+RestartSec=3
+TimeoutStopSec=20
+NoNewPrivileges=true
+PrivateTmp=true
+ReadWritePaths=/var/lib/sate2gs-testbed/channel-twin/%i
+
+[Install]
+WantedBy=multi-user.target

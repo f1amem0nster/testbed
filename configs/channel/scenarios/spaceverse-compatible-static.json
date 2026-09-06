@@ -1,0 +1,50 @@
+{
+  "schema_version": "1.0",
+  "scenario_id": "spaceverse-compatible-static",
+  "time_mode": "realtime",
+  "topology": {
+    "nodes": [
+      {"id": "ground-01", "role": "ground"},
+      {"id": "satellite-01", "role": "satellite"}
+    ],
+    "directed_links": [
+      {
+        "id": "uplink",
+        "src": "ground-01",
+        "dst": "satellite-01",
+        "available": true,
+        "rate_bps": 110670000,
+        "one_way_delay_ms": 0,
+        "jitter_ms": 0,
+        "loss_pct": 0,
+        "queue_limit_packets": 10000,
+        "provenance": {
+          "rate": "Symmetric engineering assumption based on the SpaceVerse default downlink rate; not reported by SpaceVerse as an uplink measurement.",
+          "delay_loss": "Zero-impairment calibration baseline; not reported SpaceVerse values. Physical LAN baseline remains present."
+        }
+      },
+      {
+        "id": "downlink",
+        "src": "satellite-01",
+        "dst": "ground-01",
+        "available": true,
+        "rate_bps": 110670000,
+        "one_way_delay_ms": 0,
+        "jitter_ms": 0,
+        "loss_pct": 0,
+        "queue_limit_packets": 10000,
+        "provenance": {
+          "rate": "SpaceVerse section 4.1.4 default satellite-to-ground bandwidth: 110.67 Mbps.",
+          "delay_loss": "Zero-impairment calibration baseline; not reported SpaceVerse values. Physical LAN baseline remains present."
+        }
+      }
+    ]
+  },
+  "transport": {
+    "protocol": "tcp",
+    "max_active_business_transfers": 1,
+    "queue_policy": "durable_fifo",
+    "delivery_policy": "queue_and_retry",
+    "retry_unit": "whole_sample_after_connection_failure"
+  }
+}

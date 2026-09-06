@@ -1,0 +1,10 @@
+[project]
+name = "sate2gs-testbed"
+version = "0.1.0"
+description = "Satellite-to-ground IP channel emulation testbed"
+requires-python = ">=3.10"
+dependencies = []
+
+[tool.unittest]
+start-directory = "tests"
+

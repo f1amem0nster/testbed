@@ -1,0 +1,16 @@
+[Unit]
+Description=Satellite-Ground Channel Twin OVS/tc network (%i)
+After=network-online.target openvswitch-switch.service
+Wants=network-online.target
+
+[Service]
+Type=oneshot
+EnvironmentFile=/etc/sate2gs-testbed/channel-twin/%i-network
+ExecStart=/usr/bin/bash /opt/sate2gs-testbed/deployment/channel-twin/setup-static.sh --role %i --physical-iface ${PHYSICAL_IFACE} --peer-underlay-ip ${PEER_UNDERLAY_IP} --scenario /opt/sate2gs-testbed/configs/channel/scenarios/spaceverse-compatible-static.json
+ExecStop=/usr/bin/bash /opt/sate2gs-testbed/deployment/channel-twin/teardown-static.sh --physical-iface ${PHYSICAL_IFACE}
+RemainAfterExit=yes
+TimeoutStartSec=30
+TimeoutStopSec=20
+
+[Install]
+WantedBy=multi-user.target
