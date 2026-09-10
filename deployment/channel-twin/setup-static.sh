@@ -1,9 +1,10 @@
 #!/usr/bin/env bash
 set -euo pipefail
+export PATH="$PATH:/usr/sbin:/sbin"
 
 usage() {
   echo "Usage: sudo $0 --role ground|satellite --physical-iface IFACE --peer-underlay-ip IPV4 [options]"
-  echo "Options: --local-data-ip CIDR --peer-data-ip IPV4 --scenario FILE"
+  echo "Options: --local-data-ip CIDR --peer-data-ip IPV4 --data-mtu BYTES --scenario FILE"
 }
 
 script_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
@@ -13,6 +14,7 @@ physical_iface=""
 peer_underlay_ip=""
 local_data_ip=""
 peer_data_ip=""
+data_mtu="1450"
 scenario_path="$repo_root/configs/channel/scenarios/spaceverse-compatible-static.json"
 bridge="br-sgt"
 internal_port="sgt-data"
@@ -28,6 +30,7 @@ while [[ $# -gt 0 ]]; do
     --peer-underlay-ip) peer_underlay_ip="$2"; shift 2 ;;
     --local-data-ip) local_data_ip="$2"; shift 2 ;;
     --peer-data-ip) peer_data_ip="$2"; shift 2 ;;
+    --data-mtu) data_mtu="$2"; shift 2 ;;
     --scenario) scenario_path="$2"; shift 2 ;;
     --help|-h) usage; exit 0 ;;
     *) echo "Unknown argument: $1" >&2; usage >&2; exit 2 ;;
@@ -61,6 +64,22 @@ if [[ ! -f "$scenario_path" ]]; then
   exit 2
 fi
 
+# Check the actual route: a VPN or a stale Wi-Fi address can bypass the IFB.
+route_json="$(ip -j -4 route get "$peer_underlay_ip")"
+local_underlay_ip="$(python3 -c '
+import json, sys
+route = json.loads(sys.argv[1])[0]
+if route.get("dev") != sys.argv[2]:
+    sys.exit("Peer route does not use " + sys.argv[2] + ": " + str(route))
+print(route["prefsrc"])
+' "$route_json" "$physical_iface")"
+physical_mtu="$(cat "/sys/class/net/$physical_iface/mtu")"
+if [[ ! "$data_mtu" =~ ^[0-9]{3,5}$ ]] || (( 10#$data_mtu < 576 || 10#$data_mtu + 50 > physical_mtu )); then
+  echo "Data MTU must be >= 576 and leave 50 bytes for IPv4 VXLAN within physical MTU $physical_mtu" >&2
+  exit 2
+fi
+ovs-vsctl --timeout=10 show >/dev/null
+
 mapfile -t profile_values < <(
   cd "$repo_root"
   python3 -m channel_twin.scenario --scenario "$scenario_path" --receiver-role "$role"
@@ -89,9 +108,9 @@ echo "Inbound profile: rate=$rate_bps bit/s delay=$delay_ms ms jitter=$jitter_ms
 
 ovs-vsctl --may-exist add-br "$bridge"
 ovs-vsctl set-fail-mode "$bridge" standalone
-ovs-vsctl --may-exist add-port "$bridge" "$internal_port" -- set Interface "$internal_port" type=internal
+ovs-vsctl --may-exist add-port "$bridge" "$internal_port" -- set Interface "$internal_port" type=internal mtu_request="$data_mtu"
 ovs-vsctl --may-exist add-port "$bridge" "$vxlan_port" -- set Interface "$vxlan_port" \
-  type=vxlan options:remote_ip="$peer_underlay_ip" options:key="$vxlan_id" options:dst_port="$vxlan_udp_port"
+  type=vxlan options:local_ip="$local_underlay_ip" options:remote_ip="$peer_underlay_ip" options:key="$vxlan_id" options:dst_port="$vxlan_udp_port"
 ip link set dev "$bridge" up
 ip link set dev "$internal_port" up
 ip address replace "$local_data_ip" dev "$internal_port"

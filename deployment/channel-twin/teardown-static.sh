@@ -1,5 +1,6 @@
 #!/usr/bin/env bash
 set -euo pipefail
+export PATH="$PATH:/usr/sbin:/sbin"
 
 physical_iface=""
 while [[ $# -gt 0 ]]; do
